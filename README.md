@@ -12,7 +12,7 @@ Welcome to our project for the KNU TS Hackathon 2025! This repo contains our wor
 ## 🚀 Setup
 
 ```bash
-git clone https://github.com/your-team/knu-ts-hackathon.git
+git clone https://github.com/damyr-zaichenko/knu-ts-hackaton.git
 cd knu-ts-hackathon
 python3.10 -m venv .venv
 source .venv/bin/activate  # On macOS/Linux
