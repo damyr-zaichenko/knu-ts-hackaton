@@ -1,0 +1,24 @@
+# Ignore virtual environment directories
+.venv/
+env/
+
+# Ignore Hugging Face model cache
+models/timesfm/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Pipenv files
+Pipfile.lock
+
+# Cache directories
+.cache/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+
+# Environment variable config files
+.env
