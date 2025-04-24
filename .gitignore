@@ -22,3 +22,7 @@ Pipfile.lock
 
 # Environment variable config files
 .env
+
+#
+.DS_Store
+*.csv
