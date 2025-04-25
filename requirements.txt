@@ -53,6 +53,7 @@ opt_einsum==3.4.0
 packaging==24.2
 pandas==2.2.3
 parso==0.8.4
+patsy==1.0.1
 pexpect==4.9.0
 pfzy==0.3.4
 pillow==11.2.1
@@ -85,6 +86,7 @@ shellingham==1.5.4
 six==1.17.0
 smmap==5.0.2
 stack-data==0.6.3
+statsmodels==0.14.4
 streamlit==1.44.1
 sympy==1.13.1
 tenacity==9.1.2
@@ -104,4 +106,3 @@ utilsforecast==0.2.12
 wandb==0.19.9
 watchdog==6.0.0
 wcwidth==0.2.13
-xgboost==3.0.0
