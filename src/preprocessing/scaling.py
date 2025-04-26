@@ -1,5 +1,6 @@
 from src.general.structures import *
 from sklearn.preprocessing import StandardScaler as SklearnStandardScaler
+from sklearn.preprocessing import PowerTransformer
 import numpy as np
 import pandas as pd
 from typing import List, Union, Optional
