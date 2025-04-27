@@ -16,42 +16,39 @@ class RegressionFeatureEngineer:
         """
         self.df = df.copy()
 
-
     def create_lag_features(self, columns: list[str], lags: list[int]):
         """
         Creates lag features for the specified columns.
         """
+        lagged_features = []
         for col in columns:
             for lag in lags:
-                self.df[f'{col}_lag_{lag}'] = self.df[col].shift(lag)
+                lagged = self.df[col].shift(lag).rename(f'{col}_lag_{lag}')
+                lagged_features.append(lagged)
+        
+        lagged_df = pd.concat(lagged_features, axis=1)
+        self.df = pd.concat([self.df, lagged_df], axis=1)
         return self
-
 
     def create_rolling_averages(self, columns: list[str], windows: list[int], stats: list[str] = ['mean']):
         """
         Creates rolling statistics for the specified columns.
-
-        Parameters:
-        - columns (list[str]): List of columns to compute rolling statistics for.
-        - windows (list[int]): List of window sizes (e.g., [7, 14, 30]).
-        - stats (list[str]): List of statistics to compute, like ['mean', 'std'].
         """
+        rolling_features = []
         for col in columns:
             for window in windows:
                 roll = self.df[col].rolling(window)
                 for stat in stats:
-                    self.df[f'{col}_roll_{stat}_{window}'] = getattr(roll, stat)()
+                    feature = getattr(roll, stat)().rename(f'{col}_roll_{stat}_{window}')
+                    rolling_features.append(feature)
+        
+        rolling_df = pd.concat(rolling_features, axis=1)
+        self.df = pd.concat([self.df, rolling_df], axis=1)
         return self
-
 
     def create_polynomial_features(self, columns: list[str], degree: int = 2, interaction_only: bool = False):
         """
         Generates polynomial features from the specified columns.
-
-        Parameters:
-        - columns (list[str]): List of column names to transform.
-        - degree (int): The polynomial degree.
-        - interaction_only (bool): If True, only interaction terms are produced.
         """
         poly = PolynomialFeatures(degree=degree, interaction_only=interaction_only, include_bias=False)
         data = self.df[columns]
@@ -59,10 +56,22 @@ class RegressionFeatureEngineer:
         feature_names = poly.get_feature_names_out(columns)
         poly_df = pd.DataFrame(poly_features, columns=feature_names, index=self.df.index)
 
-        # Avoid re-adding original columns to prevent duplication
         self.df = pd.concat([self.df.drop(columns, axis=1), poly_df], axis=1)
         return self
 
+    def create_exponential_smoothing(self, columns: list[str], alphas: list[float]):
+        """
+        Creates exponentially smoothed features for the specified columns.
+        """
+        ewm_features = []
+        for col in columns:
+            for alpha in alphas:
+                smoothed = self.df[col].ewm(alpha=alpha, adjust=False).mean().rename(f'{col}_ewm_alpha_{alpha}')
+                ewm_features.append(smoothed)
+
+        ewm_df = pd.concat(ewm_features, axis=1)
+        self.df = pd.concat([self.df, ewm_df], axis=1)
+        return self
 
     def get_engineered_data(self) -> pd.DataFrame:
         """
