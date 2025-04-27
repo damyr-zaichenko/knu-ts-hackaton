@@ -6,7 +6,7 @@ def load_timesfm_model():
     
     # Set directory to store model
     base_dir = p.abspath(p.dirname(__file__))
-    model_cache_dir = p.join(base_dir, "..", "models", "timesfm")
+    model_cache_dir = p.join(base_dir, "..", "models", "checkpoints", "timesfm_v2")
     os.environ["HF_HOME"] = model_cache_dir
     os.environ["TRANSFORMERS_CACHE"] = model_cache_dir
     os.environ["TORCH_HOME"] = model_cache_dir
@@ -18,13 +18,16 @@ def load_timesfm_model():
         hparams=timesfm.TimesFmHparams(
             backend="gpu",
             per_core_batch_size=32,
-            horizon_len=128,
+            horizon_len=420,
             num_layers=50,
             use_positional_embedding=False,
-            context_len=2048,
+            context_len=2048*10,
         ),
         checkpoint=timesfm.TimesFmCheckpoint(
             huggingface_repo_id="google/timesfm-2.0-500m-pytorch"
         ),
     )
     return model
+
+
+#load_timesfm_model()

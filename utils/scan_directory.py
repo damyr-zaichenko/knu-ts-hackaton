@@ -33,6 +33,6 @@ def extract_functions_with_docstrings(root_dir: str) -> dict:
 
     return results
 
-import streamlit as st
+#import streamlit as st
 print(extract_functions_with_docstrings(os.getcwd()))
-st.json(extract_functions_with_docstrings(os.getcwd()))
+#st.json(extract_functions_with_docstrings(os.getcwd()))

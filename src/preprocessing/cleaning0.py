@@ -11,9 +11,8 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import SplineTransformer
 from scipy import stats
 from scipy import interpolate
-import scikit_posthocs as sp
-from src.general.structures import *
-
+from general.structures import *
+from sklearn.decomposition import PCA
 
 
 
@@ -506,3 +505,92 @@ class SplineInterpolationImputer(BaseTransformer):
         return self.fit(ts_data).transform(ts_data)
 
 
+
+import matplotlib.pyplot as plt
+
+class PCATransformer(BaseTransformer):
+    """
+    Applies Principal Component Analysis (PCA) for dimensionality reduction.
+    """
+
+    def __init__(self, n_components: Optional[int] = None, whiten: bool = False):
+        """
+        Initialize PCA transformer.
+
+        Args:
+            n_components: Number of components to keep. If None, all components are kept.
+            whiten: Whether to apply whitening (default False).
+        """
+        self.n_components = n_components
+        self.whiten = whiten
+        self.pca = None
+        self.columns_ = None
+
+    def fit(self, ts_data: TSdata):
+        """
+        Fit the PCA transformer on feature columns of the TSdata object.
+
+        Args:
+            ts_data: TSdata object containing features to reduce.
+        """
+
+        self.columns_ = ts_data.features
+        self.pca = PCA(n_components=self.n_components, whiten=self.whiten)
+        self.pca.fit(ts_data.data[self.columns_])
+        self._is_fitted = True
+        return self
+
+    def transform(self, ts_data: TSdata) -> TSdata:
+        """
+        Apply PCA transformation to feature columns.
+
+        Args:
+            ts_data: TSdata object to transform.
+
+        Returns:
+            TSdata object with transformed features.
+        """
+        self._check_if_fitted()
+        transformed = self.pca.transform(ts_data.data[self.columns_])
+
+        transformed_df = ts_data.data.drop(columns=self.columns_).copy()
+        pca_columns = [f'pca_{i}' for i in range(transformed.shape[1])]
+        for i, col in enumerate(pca_columns):
+            transformed_df[col] = transformed[:, i]
+
+        return TSdata(
+            data=transformed_df,
+            time=ts_data.time,
+            features=pca_columns
+        )
+
+    def fit_transform(self, ts_data: TSdata) -> TSdata:
+        """
+        Fit to data, then transform it.
+        """
+        self.fit(ts_data)
+        return self.transform(ts_data)
+
+
+    def plot_explained_variance(self):
+        """
+        Plot the explained variance ratio of each principal component as a bar plot
+        and print the cumulative explained variance.
+        """
+        self._check_if_fitted()
+        explained_var = self.pca.explained_variance_ratio_
+        cumulative_var = explained_var.cumsum()
+
+        # Print cumulative explained variance
+        print("Cumulative explained variance:")
+        for i, cum_var in enumerate(cumulative_var, start=1):
+            print(f"Component {i}: {cum_var:.4f}")
+
+        # Plot
+        plt.figure(figsize=(8, 5))
+        plt.bar(range(1, len(explained_var) + 1), explained_var, color='skyblue')
+        plt.title('Explained Variance Ratio by Principal Component')
+        plt.xlabel('Principal Component')
+        plt.ylabel('Explained Variance Ratio')
+        plt.grid(axis='y')
+        plt.show()

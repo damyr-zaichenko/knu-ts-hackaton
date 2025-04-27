@@ -5,77 +5,77 @@ from sklearn.preprocessing import PolynomialFeatures
 
 class RegressionFeatureEngineer:
     """
-    Handle feature engineering tasks for time series data, including
+    Handles feature engineering tasks for time series data, including
     lag features, rolling statistics, and polynomial transformations
     for regression tasks.
     """
 
     def __init__(self, df: pd.DataFrame):
         """
-        Initialize the RegressionFeatureEngineer class.
+        Initialize the RegressionFeatureEngineer.
+
+        Parameters:
+        - df (pd.DataFrame): The input time series DataFrame.
         """
         self.df = df.copy()
 
     def create_lag_features(self, columns: list[str], lags: list[int]):
         """
-        Creates lag features for the specified columns.
+        Create lag features for specified columns and lags.
         """
-        lagged_features = []
-        for col in columns:
-            for lag in lags:
-                lagged = self.df[col].shift(lag).rename(f'{col}_lag_{lag}')
-                lagged_features.append(lagged)
-        
-        lagged_df = pd.concat(lagged_features, axis=1)
-        self.df = pd.concat([self.df, lagged_df], axis=1)
+        new_cols = {
+            f'{col}_lag_{lag}': self.df[col].shift(lag)
+            for col in columns
+            for lag in lags
+        }
+        self.df = self.df.assign(**new_cols)
         return self
 
     def create_rolling_averages(self, columns: list[str], windows: list[int], stats: list[str] = ['mean']):
         """
-        Creates rolling statistics for the specified columns.
+        Create rolling window statistics (mean, std, etc.) for specified columns.
         """
-        rolling_features = []
+        new_cols = {}
         for col in columns:
             for window in windows:
                 roll = self.df[col].rolling(window)
                 for stat in stats:
-                    feature = getattr(roll, stat)().rename(f'{col}_roll_{stat}_{window}')
-                    rolling_features.append(feature)
-        
-        rolling_df = pd.concat(rolling_features, axis=1)
-        self.df = pd.concat([self.df, rolling_df], axis=1)
+                    func = getattr(roll, stat)
+                    new_cols[f'{col}_roll_{stat}_{window}'] = func()
+        self.df = self.df.assign(**new_cols)
         return self
 
     def create_polynomial_features(self, columns: list[str], degree: int = 2, interaction_only: bool = False):
         """
-        Generates polynomial features from the specified columns.
+        Generate polynomial and interaction features from specified columns.
         """
-        poly = PolynomialFeatures(degree=degree, interaction_only=interaction_only, include_bias=False)
         data = self.df[columns]
+        poly = PolynomialFeatures(degree=degree, interaction_only=interaction_only, include_bias=False)
         poly_features = poly.fit_transform(data)
         feature_names = poly.get_feature_names_out(columns)
+
         poly_df = pd.DataFrame(poly_features, columns=feature_names, index=self.df.index)
 
-        self.df = pd.concat([self.df.drop(columns, axis=1), poly_df], axis=1)
+        # Drop original columns and add transformed features
+        self.df = self.df.drop(columns=columns)
+        self.df = pd.concat([self.df, poly_df], axis=1)
         return self
 
     def create_exponential_smoothing(self, columns: list[str], alphas: list[float]):
         """
-        Creates exponentially smoothed features for the specified columns.
+        Create exponentially smoothed versions of specified columns.
         """
-        ewm_features = []
-        for col in columns:
-            for alpha in alphas:
-                smoothed = self.df[col].ewm(alpha=alpha, adjust=False).mean().rename(f'{col}_ewm_alpha_{alpha}')
-                ewm_features.append(smoothed)
-
-        ewm_df = pd.concat(ewm_features, axis=1)
-        self.df = pd.concat([self.df, ewm_df], axis=1)
+        new_cols = {
+            f'{col}_ewm_alpha_{alpha}': self.df[col].ewm(alpha=alpha, adjust=False).mean()
+            for col in columns
+            for alpha in alphas
+        }
+        self.df = self.df.assign(**new_cols)
         return self
 
     def get_engineered_data(self) -> pd.DataFrame:
         """
-        Returns the DataFrame with engineered features.
+        Return the DataFrame with engineered features.
         """
         return self.df
 
